@@ -1,20 +1,14 @@
 /* ================================
+   Leaflet CSS MUST COME FIRST
+================================ */
+@import "leaflet/dist/leaflet.css";
+
+/* ================================
    Tailwind Directives
 ================================ */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* ================================
-   Leaflet Map Styles
-================================ */
-@import "leaflet/dist/leaflet.css";
-
-.leaflet-container {
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-}
 
 /* ================================
    Global Reset
@@ -35,6 +29,15 @@ body {
   color: #0f172a;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Ubuntu, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+
+/* ================================
+   Leaflet Container Fix
+================================ */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: 0;
 }
 
 /* ================================
@@ -74,87 +77,48 @@ p {
 }
 
 /* ================================
-   Buttons (PURE CSS – NO TAILWIND)
+   Buttons (Tailwind v3 @apply OK)
 ================================ */
 .btn-primary {
-  background-color: #0284c7; /* sky-600 */
-  color: #ffffff;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-.btn-primary:hover {
-  background-color: #0369a1; /* sky-700 */
+  @apply bg-sky-600 text-white px-6 py-3 rounded-lg font-medium shadow hover:bg-sky-700 transition;
 }
 
 .btn-secondary {
-  background-color: #ffffff;
-  color: #0284c7;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  border: 1px solid #bae6fd;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.btn-secondary:hover {
-  background-color: #f0f9ff;
+  @apply bg-white text-sky-700 px-6 py-3 rounded-lg border border-sky-200 hover:bg-sky-50 transition;
 }
 
 /* ================================
    Cards
 ================================ */
 .card {
-  background: #ffffff;
-  border-radius: 0.75rem;
-  padding: 1.25rem;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+  @apply bg-white rounded-xl p-5 shadow-lg;
 }
 
 /* ================================
-   Form Inputs
+   Inputs
 ================================ */
 input,
 select {
-  width: 100%;
-  padding: 0.65rem 0.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid #cbd5e1;
-  outline: none;
-}
-
-input:focus,
-select:focus {
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+  @apply w-full px-3 py-2 rounded-md border border-slate-300
+    focus:outline-none focus:ring-2 focus:ring-sky-400;
 }
 
 /* ================================
-   Itinerary Styles
+   Itinerary
 ================================ */
 .day-card {
-  border-left: 4px solid #38bdf8;
-  padding-left: 1rem;
-  margin-bottom: 1.5rem;
+  @apply border-l-4 border-sky-400 pl-4 mb-6;
 }
 
 .activity-time {
-  font-weight: 600;
-  color: #0284c7;
+  @apply font-semibold text-sky-600;
 }
 
 /* ================================
    Map Wrapper
 ================================ */
 .map-container {
-  height: 420px;
-  width: 100%;
-  border-radius: 0.75rem;
-  overflow: hidden;
+  @apply h-[420px] w-full rounded-xl overflow-hidden;
 }
 
 /* ================================
