@@ -1,118 +1,87 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
-const ItinerarySchema = z.object({
-  destination: z.string(),
-  overview: z.string().optional(),
-  total_cost_estimate: z.string().optional(),
-  days: z.number().optional(),
-  itinerary: z.array(
-    z.object({
-      day: z.number(),
-      title: z.string().optional(),
-      activities: z.array(
-        z.object({
-          time: z.string().optional(),
-          place: z.string().optional(),
-          description: z.string().optional(),
-          estimated_cost: z.string().optional(),
-        })
-      ),
-    })
-  ),
-});
 
 export async function POST(req) {
   try {
-    const body = await req.json();
-    const {
-      destination = "",
-      days = 3,
-      budget = "unspecified",
-      style = "Balanced",
-    } = body;
+    const { destination, days, budget, style } = await req.json();
 
-    const userPrompt = `
-You are a travel planner assistant. Generate a multi-day itinerary in STRICT JSON only.  
-Fields required: destination, overview, total_cost_estimate, itinerary (array of day objects).
-Each day object must have: day (number), title (short), activities (array).
-Each activity: time (string), place (string), description (string), estimated_cost (string).
+    const prompt = `
+You are a travel planner.
 
-Destination: ${destination}
-Days: ${days}
+Create a ${days}-day itinerary for ${destination}.
 Budget: ${budget}
 Style: ${style}
 
-Return ONLY valid JSON — no backticks, no explanation.
+Respond in JSON with this structure ONLY:
+{
+  "destination": "",
+  "overview": "",
+  "itinerary": [
+    {
+      "day": 1,
+      "title": "",
+      "activities": [
+        {
+          "time": "",
+          "place": "",
+          "description": ""
+        }
+      ]
+    }
+  ]
+}
 `;
-    const openaiRes = await fetch(
-      "https://api.openai.com/v1/chat/completions",
+
+    const res = await fetch(
+      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
       {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${process.env.HF_API_KEY}`,
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: [
-            { role: "system", content: "You are a helpful travel planner." },
-            { role: "user", content: userPrompt },
-          ],
-          max_tokens: 1200,
-          temperature: 0.7,
+          inputs: prompt,
+          parameters: {
+            temperature: 0.7,
+            max_new_tokens: 900,
+          },
         }),
       }
     );
 
-    if (!openaiRes.ok) {
-      const text = await openaiRes.text();
+    const data = await res.json();
+
+    // HF often returns array
+    const text =
+      Array.isArray(data) && data[0]?.generated_text
+        ? data[0].generated_text
+        : data.generated_text || "";
+
+    if (!text) {
       return NextResponse.json(
-        { error: "OpenAI error", details: text },
+        { error: "No text generated", raw: data },
         { status: 500 }
       );
     }
 
-    const data = await openaiRes.json();
-    const reply = data.choices?.[0]?.message?.content || "";
-
-    let jsonText = reply;
-    const firstBrace = reply.indexOf("{");
-    if (firstBrace !== -1) {
-      jsonText = reply.slice(firstBrace);
-
-      const lastBrace = jsonText.lastIndexOf("}");
-      if (lastBrace !== -1) jsonText = jsonText.slice(0, lastBrace + 1);
-    }
-
-    let parsed;
-    try {
-      parsed = JSON.parse(jsonText);
-    } catch (parseErr) {
+    // Extract JSON safely
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start === -1 || end === -1) {
       return NextResponse.json(
-        { error: "Failed to parse AI JSON", reply },
+        { error: "No JSON found", text },
         { status: 500 }
       );
     }
 
-    const result = ItinerarySchema.safeParse(parsed);
-    if (!result.success) {
-      return NextResponse.json(
-        { error: "Validation failed", issues: result.error.format(), parsed },
-        { status: 500 }
-      );
-    }
+    const jsonText = text.slice(start, end + 1);
+    const itinerary = JSON.parse(jsonText);
 
-    if (!parsed.days)
-      parsed.days = Array.isArray(parsed.itinerary)
-        ? parsed.itinerary.length
-        : days;
-
-    return NextResponse.json({ itinerary: parsed });
+    return NextResponse.json({ itinerary });
   } catch (err) {
-    console.error(err);
+    console.error("HF ERROR:", err);
     return NextResponse.json(
-      { error: err.message || "Server error" },
+      { error: "Failed to generate itinerary", message: err.message },
       { status: 500 }
     );
   }

@@ -19,6 +19,7 @@ export default function GeneratePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
+
       const json = await res.json();
 
       if (!res.ok) {
@@ -26,25 +27,28 @@ export default function GeneratePage() {
       } else {
         setItinerary(json.itinerary);
       }
-    } catch (error) {
-      setError(error.message);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="">
+    <div>
       <h2 className="text-2xl font-semibold mb-4">Create a Trip</h2>
-      <TravelForm onSubmit={handleGenerate} />
+
+      <TravelForm onSubmit={handleGenerate} loading={loading} />
 
       {loading && (
-        <div className="mt-6">
-          Generating plan -- this may take a few seconds...
+        <div className="mt-6 text-slate-600">
+          Generating plan — this may take a few seconds...
         </div>
       )}
+
       {error && <div className="mt-6 text-red-600">{error}</div>}
-      {itinerary && <ItineraryView data={itinerary} />}
+
+      {itinerary && <ItineraryView itinerary={itinerary} />}
     </div>
   );
 }

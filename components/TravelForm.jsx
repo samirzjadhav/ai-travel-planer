@@ -1,8 +1,12 @@
 "use client";
 import { useForm } from "react-hook-form";
 
-export default function TravelForm({ onSubmit }) {
-  const { register, handleSubmit } = useForm({
+export default function TravelForm({ onSubmit, loading = false }) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
     defaultValues: {
       destination: "Paris, France",
       days: 3,
@@ -12,9 +16,13 @@ export default function TravelForm({ onSubmit }) {
   });
 
   function submit(data) {
-    data.days = Number(data.days);
-    data.budget = Number(data.budget);
-    onSubmit && onSubmit(data);
+    const payload = {
+      ...data,
+      days: Number(data.days),
+      budget: Number(data.budget),
+    };
+
+    onSubmit?.(payload);
   }
 
   return (
@@ -23,33 +31,45 @@ export default function TravelForm({ onSubmit }) {
       className="bg-white p-6 rounded-md shadow-sm"
     >
       <div className="grid gap-4 md:grid-cols-2">
+        {/* Destination */}
         <div>
           <label className="block text-sm font-medium">Destination</label>
           <input
-            {...register("destination")}
+            {...register("destination", {
+              required: "Destination is required",
+            })}
             className="mt-1 p-2 border rounded w-full"
           />
+          {errors.destination && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.destination.message}
+            </p>
+          )}
         </div>
 
+        {/* Days */}
         <div>
           <label className="block text-sm font-medium">Days</label>
           <input
             type="number"
-            {...register("days")}
-            className="mt-1 p-2 border rounded w-full"
             min={1}
+            {...register("days", { min: 1 })}
+            className="mt-1 p-2 border rounded w-full"
           />
         </div>
 
+        {/* Budget */}
         <div>
           <label className="block text-sm font-medium">Budget (approx)</label>
           <input
             type="number"
+            min={0}
             {...register("budget")}
             className="mt-1 p-2 border rounded w-full"
           />
         </div>
 
+        {/* Style */}
         <div>
           <label className="block text-sm font-medium">Style</label>
           <select
@@ -69,9 +89,10 @@ export default function TravelForm({ onSubmit }) {
       <div className="mt-4">
         <button
           type="submit"
-          className="px-4 py-2 bg-sky-600 text-white rounded"
+          disabled={loading}
+          className="px-4 py-2 bg-sky-600 text-white rounded disabled:opacity-60"
         >
-          Generate Trip
+          {loading ? "Generating..." : "Generate Trip"}
         </button>
       </div>
     </form>
