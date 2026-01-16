@@ -82,6 +82,7 @@ export default function TravelForm({ onSubmit, loading = false }) {
             <option>Budget</option>
             <option>Luxury</option>
             <option>Family</option>
+            <option>Friends</option>
           </select>
         </div>
       </div>
